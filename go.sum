@@ -47,6 +47,8 @@ github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym
 github.com/SlothNinja/log v1.0.0/go.mod h1:ERX7qO0ujhvJVnncp2i1b1FOLptERQV1a/k/oZcKYMk=
 github.com/SlothNinja/log v1.0.1 h1:iOLPcB9m5o/pOqQhhjfnZkMzjV/6yDlR0tRHWomwetE=
 github.com/SlothNinja/log v1.0.1/go.mod h1:ERX7qO0ujhvJVnncp2i1b1FOLptERQV1a/k/oZcKYMk=
+github.com/SlothNinja/log v1.0.2 h1:akUp5ofd5Yb/5+K42/vPer2FiSpVfRhCqIDCNQiEcns=
+github.com/SlothNinja/log v1.0.2/go.mod h1:ERX7qO0ujhvJVnncp2i1b1FOLptERQV1a/k/oZcKYMk=
 github.com/SlothNinja/sn v1.0.2 h1:lFaLNUJ0/TFbNR/UBkK52HFXv7WpX0u2Jq0h7FX6t9E=
 github.com/SlothNinja/sn v1.0.2/go.mod h1:OqY/UyaN6IsL2unwwgoKIJVWKVQFliWZd7T/ZwsH8+8=
 github.com/boj/redistore v0.0.0-20180917114910-cd5dcc76aeff/go.mod h1:+RTT1BOk5P97fT2CiHkbFQwkK3mjsFAP6zCYV2aXtjw=
