@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
-	"os"
 	"time"
 
 	"cloud.google.com/go/datastore"
@@ -13,9 +12,6 @@ import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gorilla/securecookie"
-	"github.com/patrickmn/go-cache"
-	"google.golang.org/api/option"
-	"google.golang.org/grpc"
 )
 
 const (
@@ -41,36 +37,8 @@ type Client struct {
 }
 
 // NewClient creates a client for generating a secured cookie store
-func NewClient(logger *log.Logger, mcache *cache.Cache) *Client {
-	logger.Debugf(msgEnter)
-	defer logger.Debugf(msgExit)
-
-	if sn.IsProduction() {
-		logger.Debugf("production")
-		dsClient, err := datastore.NewClient(
-			context.Background(),
-			os.Getenv(secretsProjectID),
-		)
-		if err != nil {
-			logger.Panicf("unable to connect to secrets datastore: %v", err)
-		}
-		return &Client{sn.NewClient(dsClient, logger, mcache, nil)}
-
-	}
-
-	logger.Debugf("development")
-	dsClient, err := datastore.NewClient(
-		context.Background(),
-		os.Getenv(secretsProjectID),
-		option.WithEndpoint(os.Getenv(secretsDSHost)),
-		option.WithoutAuthentication(),
-		option.WithGRPCDialOption(grpc.WithInsecure()),
-		option.WithGRPCConnectionPool(50),
-	)
-	if err != nil {
-		logger.Panicf("unable to connect to to secreats datastore: %v", err)
-	}
-	return &Client{sn.NewClient(dsClient, logger, mcache, nil)}
+func NewClient(snClient *sn.Client) *Client {
+	return &Client{snClient}
 }
 
 func (client *Client) get(c context.Context) (*secret, error) {
@@ -171,12 +139,11 @@ func (s *secret) LoadKey(k *datastore.Key) error {
 type Store cookie.Store
 
 // NewStore generates a new secure cookie store
-func (client *Client) NewStore() (Store, error) {
-	client.Log.Debugf(msgEnter)
-	defer client.Log.Debugf(msgExit)
+func (client *Client) NewStore(ctx context.Context) (Store, error) {
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
-	c := context.Background()
-	s, err := client.get(c)
+	s, err := client.get(ctx)
 	if err != nil {
 		return nil, err
 	}
