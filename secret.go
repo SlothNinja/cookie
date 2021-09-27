@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"cloud.google.com/go/datastore"
+	"github.com/SlothNinja/client"
 	"github.com/SlothNinja/log"
-	"github.com/SlothNinja/sn"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gorilla/securecookie"
@@ -33,69 +33,69 @@ type secret struct {
 
 // Client for generating secure cookie store
 type Client struct {
-	*sn.Client
+	*client.Client
 }
 
 // NewClient creates a client for generating a secured cookie store
-func NewClient(snClient *sn.Client) *Client {
+func NewClient(snClient *client.Client) *Client {
 	return &Client{snClient}
 }
 
-func (client *Client) get(c context.Context) (*secret, error) {
-	client.Log.Debugf(msgEnter)
-	defer client.Log.Debugf(msgExit)
+func (cl *Client) get(c context.Context) (*secret, error) {
+	cl.Log.Debugf(msgEnter)
+	defer cl.Log.Debugf(msgExit)
 
-	s, found := client.mcGet()
+	s, found := cl.mcGet()
 	if found {
 		return s, nil
 	}
 
-	s, err := client.dsGet(c)
+	s, err := cl.dsGet(c)
 	if err != datastore.ErrNoSuchEntity {
 		return s, err
 	}
 
-	client.Log.Warningf("generated new secrets")
-	return client.update(c)
+	cl.Log.Warningf("generated new secrets")
+	return cl.update(c)
 }
 
 // mcGet attempts to pull secret from cache
-func (client *Client) mcGet() (*secret, bool) {
-	client.Log.Debugf(msgEnter)
-	defer client.Log.Debugf(msgExit)
+func (cl *Client) mcGet() (*secret, bool) {
+	cl.Log.Debugf(msgEnter)
+	defer cl.Log.Debugf(msgExit)
 
 	k := key().Encode()
 
-	item, found := client.Cache.Get(k)
+	item, found := cl.Cache.Get(k)
 	if !found {
 		return nil, false
 	}
 
 	s, ok := item.(*secret)
 	if !ok {
-		client.Cache.Delete(k)
+		cl.Cache.Delete(k)
 		return nil, false
 	}
 	return s, true
 }
 
 // dsGet attempt to pull secret from datastore
-func (client *Client) dsGet(c context.Context) (*secret, error) {
-	client.Log.Debugf(msgEnter)
-	defer client.Log.Debugf(msgExit)
+func (cl *Client) dsGet(c context.Context) (*secret, error) {
+	cl.Log.Debugf(msgEnter)
+	defer cl.Log.Debugf(msgExit)
 
 	s := &secret{Key: key()}
-	err := client.DS.Get(c, s.Key, s)
+	err := cl.DS.Get(c, s.Key, s)
 	return s, err
 }
 
-func (client *Client) update(c context.Context) (*secret, error) {
+func (cl *Client) update(c context.Context) (*secret, error) {
 	s, err := genSecret()
 	if err != nil {
 		return nil, err
 	}
 
-	_, err = client.DS.Put(c, s.Key, s)
+	_, err = cl.DS.Put(c, s.Key, s)
 	return s, err
 }
 
@@ -139,17 +139,17 @@ func (s *secret) LoadKey(k *datastore.Key) error {
 type Store cookie.Store
 
 // NewStore generates a new secure cookie store
-func (client *Client) NewStore(ctx context.Context) (Store, error) {
+func (cl *Client) NewStore(ctx context.Context) (Store, error) {
 	log.Debugf(msgEnter)
 	defer log.Debugf(msgExit)
 
-	s, err := client.get(ctx)
+	s, err := cl.get(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	if !sn.IsProduction() {
-		client.Log.Debugf("hashKey: %s\nblockKey: %s",
+	if !client.IsProduction() {
+		cl.Log.Debugf("hashKey: %s\nblockKey: %s",
 			base64.StdEncoding.EncodeToString(s.HashKey),
 			base64.StdEncoding.EncodeToString(s.BlockKey),
 		)
